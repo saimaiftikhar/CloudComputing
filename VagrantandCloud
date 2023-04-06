@@ -1,0 +1,66 @@
+#After install Vagrant
+
+
+ config.vm.box = "digital_ocean"
+  config.ssh.private_key_path = "/home/techdatabasket/.ssh/id_rsa"
+  config.vm.provider :digital_ocean do |provider|
+    provider.token = "TOKEN_HERE"
+    provider.image = "Ubuntu 16.04.2 x64"
+    provider.region = "New York 2"
+  end
+#Start vagrant
+
+
+vagrant up –provider=digital_ocean
+
+#Install all the necessary SDK in case of Google Cloud
+
+export CLOUD_SDK_REPO="cloud-sdk-$(lsb_release -c -s)"
+echo "deb http://packages.cloud.google.com/apt $CLOUD_SDK_REPO main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+sudo apt-get update && sudo apt-get install google-cloud-sdk
+
+#Install the google-plugin
+
+vagrant plugin install vagrant-google
+
+#Enable public ssh
+
+
+gcloud compute project-info add-metadata --metadata-from-file \
+  sshKeys=/tmp/id_rsa.pub
+
+#Create a new directory and install the new vagrant
+
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "gce"
+  config.vm.provider :google do |google, override|
+    google.google_project_id = "PROJECT_ID"
+    google.google_client_email = "PROJECT_ID_SERVICE_ACCOUNT@developer.gserviceaccount.com"
+    google.google_json_key_location = "~/path/to/gcloud.json"
+    # Provide an instance name
+    google.name = "clouddev"
+    # Specify the zone where your instance will be located
+    google.zone = "asia-east1-c"
+    # Specify the machine type you would like to use
+    google.machine_type = "n1-standard-2"
+    # Specify the image that will be used
+    google.image = "ubuntu-1404-trusty-v20150901a"
+    #provide the SSH user name and location of private key
+    override.ssh.username = "SaimaIftikhar"
+    override.ssh.private_key_path = "~/.ssh/id_rsa"
+  end
+end
+#Start vagrant using Google Cloud
+
+vagrant up –provider=google
+
+
+
+
+
+
+
+
+
